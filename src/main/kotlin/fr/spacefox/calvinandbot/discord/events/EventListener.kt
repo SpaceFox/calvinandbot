@@ -1,7 +1,7 @@
 package fr.spacefox.calvinandbot.discord.events
 
-import discord4j.core.`object`.entity.Message
 import discord4j.core.event.domain.Event
+import discord4j.core.`object`.entity.Message
 import fr.spacefox.calvinandbot.util.LoggerDelegate
 import kotlinx.coroutines.flow.Flow
 import reactor.core.publisher.Mono
