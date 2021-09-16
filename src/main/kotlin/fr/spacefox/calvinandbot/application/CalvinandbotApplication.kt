@@ -5,8 +5,11 @@ import fr.spacefox.calvinandbot.repository.repositoryModule
 import fr.spacefox.calvinandbot.service.DiscordService
 import fr.spacefox.calvinandbot.service.LuceneReadService
 import fr.spacefox.calvinandbot.service.LuceneWriteService
+import fr.spacefox.calvinandbot.service.ScraperService
 import fr.spacefox.calvinandbot.service.servicesModule
 import fr.spacefox.calvinandbot.util.LoggerDelegate
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.context.startKoin
@@ -28,6 +31,7 @@ class CalvinandbotApplication : KoinComponent {
     private val discordService by inject<DiscordService>()
     private val luceneService by inject<LuceneReadService>()
     private val luceneWriteService by inject<LuceneWriteService>()
+    private val scraperService by inject<ScraperService>()
 
     fun launch() {
         log.info("Launching Calvin and Bot")
@@ -36,7 +40,10 @@ class CalvinandbotApplication : KoinComponent {
         // Required because Lucene index cannot be update while reading, thus it must be fully loaded before reading.
         luceneWriteService.loadStrips()
 
-        luceneService.init()
-        discordService.init()
+        runBlocking {
+            launch { scraperService.init() }
+            launch { luceneService.init() }
+            launch { discordService.init() }
+        }
     }
 }

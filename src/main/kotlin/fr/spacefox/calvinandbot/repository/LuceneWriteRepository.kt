@@ -30,7 +30,14 @@ class LuceneWriteRepository : AutoCloseable {
         return strip
     }
 
-    fun flush() {
+    fun commit() {
         writer.flush()
+        writer.commit()
+    }
+
+    fun clearAll() {
+        writer.deleteAll()
+        commit()
+        writer.deleteUnusedFiles()
     }
 }

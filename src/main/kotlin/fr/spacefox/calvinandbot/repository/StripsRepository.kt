@@ -4,25 +4,52 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import fr.spacefox.calvinandbot.model.Strip
 import fr.spacefox.calvinandbot.util.Properties
-import java.net.URL
+import java.io.File
+import java.net.URI
+import java.time.LocalDate
 
 class StripsRepository {
 
-    private var dataPath = Properties.value(
-        "strips.dataPath",
-        "file:/home/spacefox/dev/kotlin/calvinandbot/src/main/resources/comics/calvin-and-hobbes.json"
+    val mapper = jacksonObjectMapper().findAndRegisterModules()
+    val dataFile = File(
+        URI(
+            Properties.value(
+                "strips.dataPath",
+                "file:/home/spacefox/dev/kotlin/calvinandbot-lite/src/main/resources/comics/calvin-and-hobbes.json"
+            )
+        )
     )
+    var strips: MutableList<Strip?> = mutableListOf()
 
-    fun stripsFromJson(): Array<Strip?> {
-        val mapper = jacksonObjectMapper().findAndRegisterModules()
-//        val src = BotConfiguration::class.java.getResource("/comics/calvin-and-hobbes.json")
-//        return mapper.readValue(src)
-        return mapper.readValue(URL(dataPath))
+    fun stripsFromJson(): MutableList<Strip?> {
+        return mapper.readValue(dataFile)
     }
 
-    fun validStrips() = stripsFromJson()
+    fun validStrips(): MutableList<Strip> {
+        if (strips.isEmpty()) {
+            strips = stripsFromJson()
+        }
+        return strips
+            .filterNotNull()
+            // Strips without transcripts are filling strips on date without original publication
+            .filter { it.rawTranscript.isNotEmpty() }
+            .toMutableList()
+    }
+
+    // Dont’t use valid strips only to avoid re-scraping of invalid strips
+    fun lastUpdate(defaultDate: LocalDate): LocalDate = stripsFromJson()
         .filterNotNull()
-        // Strips without transcripts are filling strips on date without original publication
-        .filter { it.rawTranscript.isNotEmpty() }
-        .toMutableList()
+        .map { it.publishDate }
+        .maxOrNull()
+        ?: defaultDate
+
+    fun add(strip: Strip) {
+        strips.add(strip)
+    }
+
+    fun save() {
+        return mapper
+            .writerWithDefaultPrettyPrinter()
+            .writeValue(dataFile, strips)
+    }
 }

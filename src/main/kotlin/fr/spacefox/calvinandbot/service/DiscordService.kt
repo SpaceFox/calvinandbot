@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.mono
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -24,7 +25,7 @@ class DiscordService : KoinComponent {
     private val createListener by inject<MessageCreateListener>()
     private val updateListener by inject<MessageUpdateListener>()
 
-    fun init() {
+    suspend fun init() {
         log.info("Initializing Discord Service")
         val token = Properties.value("discord4j.token", "/calvin")
 
@@ -42,6 +43,6 @@ class DiscordService : KoinComponent {
                         .launchIn(this)
                 }
             }
-        }.block()
+        }.awaitSingle()
     }
 }

@@ -6,4 +6,5 @@ val servicesModule = module {
     single { DiscordService() }
     single { LuceneReadService() }
     single { LuceneWriteService() }
+    single { ScraperService() }
 }

@@ -20,14 +20,19 @@ class LuceneWriteService : KoinComponent {
         val strips = stripsRepository.validStrips()
         val repository = LuceneWriteRepository()
         repository.use {
+            clearAll(repository)
             saveAll(repository, strips)
-            flush(repository)
+            commit(repository)
         }
         log.info("${strips.size} strips indexed in Lucene.")
+    }
+
+    private fun clearAll(repository: LuceneWriteRepository) {
+        repository.clearAll()
     }
 
     private fun saveAll(repository: LuceneWriteRepository, strips: MutableList<Strip>) =
         strips.forEach { repository.save(it) }
 
-    private fun flush(repository: LuceneWriteRepository) = repository.flush()
+    private fun commit(repository: LuceneWriteRepository) = repository.commit()
 }
