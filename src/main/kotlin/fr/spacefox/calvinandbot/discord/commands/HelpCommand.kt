@@ -20,8 +20,8 @@ class HelpCommand(override val message: Message, val command: String) : Command 
                     "• `yyyy-mm-dd`, `yy-mm-dd`, `dd/mm/yyyy` or `dd/mm/yy`: displays the strip for the given date " +
                     "_(between 18th november 1985 and 31th december 1995)_\n" +
                     "• `any other terms` will search a strip with provided terms in transcript.\n" +
-                    "Search allows wilcards (single-character `te?t` or multiple characters `te*t`), " +
-                    "regular expressions (`/[mb]oat/`), fussy search (`roam~`) and any Lucene-supported terms " +
+                    "Search allows wildcards (single-character `te?t` or multiple characters `te*t`), " +
+                    "regular expressions (`/[mb]oat/`), fuzzy search (`roam~`) and any Lucene-supported terms " +
                     "modifier as specified here: " +
                     "<https://lucene.apache.org/core/8_9_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#Term_Modifiers>"
             )
