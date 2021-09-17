@@ -1,0 +1,16 @@
+[Unit]
+Description=Calvin and Bot
+After=syslog.target
+After=network.target[Service]
+User=calvinandbot
+Type=simple
+
+[Service]
+ExecStart=/usr/bin/java -Xms64m -Xmx64m  -Ddiscord4j.token={your token} -jar /path/to/calvinandbot.jar
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=calvin
+
+[Install]
+WantedBy=multi-user.target
