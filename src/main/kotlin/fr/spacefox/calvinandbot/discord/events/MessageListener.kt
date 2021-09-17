@@ -29,7 +29,7 @@ class MessageListener : KoinComponent {
         val log: Logger by LoggerDelegate()
     }
 
-    internal val command: String = Properties.value("bot.command", "/calvin")
+    internal val command: String = Properties.value(Properties.BOT_COMMAND, "/calvin")
 
     private val isoDateRegex = "^\\d{4}-\\d{2}-\\d{2}$".toRegex()
     private val isoShortDateRegex = "^\\d{2}-\\d{2}-\\d{2}$".toRegex()

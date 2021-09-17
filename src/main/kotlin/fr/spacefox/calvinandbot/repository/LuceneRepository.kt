@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 internal class LuceneRepository : AutoCloseable {
 
-    private val pathName: String = Properties.value("lucene.index.path", "/home/spacefox/dev/kotlin/calvinandbot-lite/lucene")
+    private val pathName: String = Properties.value(Properties.LUCENE_INDEX_PATH, "lucene")
     internal val directory: FSDirectory = FSDirectory.open(Path.of(pathName))
     internal val analyzer: StandardAnalyzer = StandardAnalyzer()
 

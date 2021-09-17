@@ -12,12 +12,14 @@ import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpStatement
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.slf4j.Logger
@@ -35,9 +37,9 @@ class ScraperService : KoinComponent {
 
     private val stripsRepository by inject<StripsRepository>()
 
-    private val enabled = Properties.value("scraper.enabled", false)
-    private val delayMs = Properties.value("scraper.delayMs", 1000)
-    private val timeoutMs = Properties.value("scraper.timeoutMs", 30_000)
+    private val enabled = Properties.value(Properties.SCRAPER_ENABLED, false)
+    private val delayMs = Properties.value(Properties.SCRAPER_DELAY_MS, 1000)
+    private val timeoutMs = Properties.value(Properties.SCRAPER_TIMEOUT_MS, 30_000)
 
     private val dateToUrlPartFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
     private val httpClient: HttpClient = HttpClient(CIO) {
@@ -58,8 +60,13 @@ class ScraperService : KoinComponent {
         log.info("Scraper service is ${if (enabled) "enabled" else "disabled"}")
 
         if (enabled) {
-            log.info(" -> Scraper will get a new strip each $delayMs ms with a $timeoutMs ms timeout.")
-            scrape()
+            if (stripsRepository.useInternalData) {
+                log.error("Scraper service requires an external data path to store scraped data. " +
+                    "Please set it with -D${Properties.STRIPS_DATA_URL} parameter. No scraping will be done.")
+            } else {
+                log.info(" -> Scraper will get a new strip each $delayMs ms with a $timeoutMs ms timeout.")
+                scrape()
+            }
         }
     }
 
@@ -76,13 +83,15 @@ class ScraperService : KoinComponent {
             .map {
                 val url = "https://www.gocomics.com/calvinandhobbes/$it"
                 log.info("Downloading strip from $url")
-                httpClient
-                    .get<HttpStatement>(url)
-                    .receive<String>()
+                withContext(Dispatchers.IO) {
+                    httpClient
+                        .get<HttpStatement>(url)
+                        .receive<String>()
+                }
             }
             .map { StripBodyToModelMapper.stripBodyToModel(it) }
             .map { stripsRepository.add(it) }
-            .collect { stripsRepository.save() }
+            .collect { withContext(Dispatchers.IO) { stripsRepository.save() } }
         log.warn("Scraping finished! Restart server to index content.")
     }
 

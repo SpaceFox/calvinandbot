@@ -3,26 +3,44 @@ package fr.spacefox.calvinandbot.repository
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import fr.spacefox.calvinandbot.model.Strip
+import fr.spacefox.calvinandbot.util.LoggerDelegate
 import fr.spacefox.calvinandbot.util.Properties
+import org.slf4j.Logger
 import java.io.File
-import java.net.URI
+import java.net.MalformedURLException
+import java.net.URL
+import java.security.InvalidParameterException
 import java.time.LocalDate
 
 class StripsRepository {
 
-    val mapper = jacksonObjectMapper().findAndRegisterModules()
-    val dataFile = File(
-        URI(
-            Properties.value(
-                "strips.dataPath",
-                "file:/home/spacefox/dev/kotlin/calvinandbot-lite/src/main/resources/comics/calvin-and-hobbes.json"
-            )
-        )
-    )
+    companion object {
+        val log: Logger by LoggerDelegate()
+    }
+
+    private val mapper = jacksonObjectMapper().findAndRegisterModules()
+    private val dataUrl: URL
     var strips: MutableList<Strip?> = mutableListOf()
+    val useInternalData: Boolean
+
+    init {
+        val dataUrlParam = Properties.value(Properties.STRIPS_DATA_URL, "")
+        val maybeDataFile: URL? = if (dataUrlParam.isNotBlank()) {
+            useInternalData = false
+            dataUrlParam.toURL()
+        } else {
+            useInternalData = true
+            StripsRepository::class.java.getResource("/comics/calvin-and-hobbes.json")
+        }
+        if (maybeDataFile == null) {
+            throw InvalidParameterException("Invalid value read from ${Properties.STRIPS_DATA_URL}, " +
+                "expected a valid URL but found \"$dataUrlParam\".")
+        }
+        dataUrl = maybeDataFile
+    }
 
     fun stripsFromJson(): MutableList<Strip?> {
-        return mapper.readValue(dataFile)
+        return mapper.readValue(dataUrl)
     }
 
     fun validStrips(): MutableList<Strip> {
@@ -50,6 +68,14 @@ class StripsRepository {
     fun save() {
         return mapper
             .writerWithDefaultPrettyPrinter()
-            .writeValue(dataFile, strips)
+            .writeValue(File(dataUrl.toURI()), strips)
+    }
+}
+
+private fun String.toURL(): URL? {
+    return try {
+        if (this.isBlank()) null else URL(this)
+    } catch (e: MalformedURLException) {
+        null
     }
 }

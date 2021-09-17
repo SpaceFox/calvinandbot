@@ -27,7 +27,7 @@ class DiscordService : KoinComponent {
 
     suspend fun init() {
         log.info("Initializing Discord Service")
-        val token = Properties.value("discord4j.token", "/calvin")
+        val token = Properties.value(Properties.DISCORD4J_TOKEN, "")
 
         val listeners = listOf(createListener, updateListener)
 
